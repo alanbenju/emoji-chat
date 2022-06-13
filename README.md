@@ -65,6 +65,63 @@ Every socket connection needs to attach token to socket.auth before connecting
 Get my teammates: GET userservice/teammates
 ```
 
+Server accepted socket messages:
+```bash
+
+emoji:private: Sends private message. 
+Body:
+{
+  to: nickname: string
+  emojiId: id of emoji: number
+}
+Second param for callback (acknowledgment)
+
+emoji:team: Sends message to user team
+Body:
+{
+  emojiId
+}
+Second param for callback (acknowledgment)
+
+```
+
+Client accepted socket messages:
+```bash
+
+emoji:private: Sends private message. 
+Message:
+{
+  from: nickname: string
+  emojiId: id of emoji: number
+}
+
+emoji:team: Sends message to user team
+Message:
+{
+  from
+  emojiId
+}
+
+user:connected: Another teammember is now connected
+Message:
+{
+  username: string, 
+  id: string: socket id
+}
+
+team:connected: All connected teammates
+Message:
+{
+  teammates: [
+    {
+      username: string, 
+      id: string: socket id
+    }
+    ...
+  ]
+}
+```
+
 There are more endpoints that are not being used, hence not verified or tested and in consecuence not added to the documentation
 
 ## DEMO

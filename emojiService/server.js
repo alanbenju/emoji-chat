@@ -69,7 +69,6 @@ function sendPrivateEmoji(message, usernameFrom, acknowledgement) {
 /**
  * 
  * @param {*} message {to, emojiId}
- * to: teamNickname: string
  * emojiId: id of emoji: number
  */
 function sendTeamEmoji(message, usernameFrom, acknowledgement) {
