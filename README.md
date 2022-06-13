@@ -155,6 +155,9 @@ Real time chat for emoji sending
 
 ![App Screenshot](https://i.ibb.co/WpJqhn1/Untitled-Diagram-drawio-drawio.png)
 
+When socket/emoji service needs to scale, Redis is added to handle communication between sockets that live in different servers.
+The client handles the emojis and animations on it's own application.
+
 #### Tracked time
 Documentation and design thinking: 1.5 hours
 
