@@ -59,6 +59,7 @@ Response:
 ```
 
 Every other request will need Authorization header with Bearer token
+
 Every socket connection needs to attach token to socket.auth before connecting
 
 ```bash
@@ -152,7 +153,7 @@ Real time chat for emoji sending
 
 ### Architecture
 
-![App Screenshot](https://i.ibb.co/FKL7wq1/Untitled-Diagram-drawio-drawio.png)
+![App Screenshot](https://i.ibb.co/WpJqhn1/Untitled-Diagram-drawio-drawio.png)
 
 #### Tracked time
 Documentation and design thinking: 1.5 hours
