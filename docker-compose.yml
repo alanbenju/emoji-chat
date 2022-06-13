@@ -1,0 +1,25 @@
+version: '3.9'
+services:
+  user-service:
+    restart: on-failure
+    build: ./userService
+    ports:
+      - '3001:3001'
+  team-service:
+    restart: on-failure
+    build: ./teamService
+    ports:
+      - '3002:3002'
+  emoji-service:
+    restart: on-failure
+    build: ./emojiService
+    ports:
+      - '3000:3000'
+  nginx:
+    build: ./nginx
+    ports:
+    - '81:81'
+    depends_on:
+    - user-service
+    - team-service
+    - emoji-service

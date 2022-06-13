@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <title>Socket.IO chat</title>
+  <style>
+    body {
+      margin: 0;
+      padding-bottom: 3rem;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    }
+
+    .login {
+      margin-bottom: 15px;
+    }
+
+    .connected {
+      color: blue;
+      cursor: pointer;
+    }
+  </style>
+  <script src="/socket.io/socket.io.js"></script>
+
+</head>
+<div class="login">
+  <input id="input" placeholder="username" />
+  <button onclick="login()">Login</button>
+</div>
+<h3>Connected teammates</h3>
+<ul id="connected-teammates">
+  <li class="connected">Team</li>
+</ul>
+<h3>Disconnected teammates</h3>
+<ul id="disconnected-teammates">
+</ul>
+
+</body>
+<script>
+  var socket = io({ autoConnect: false });
+
+  socket.on("connect_error", (err) => {
+    console.log("error conecting", err)
+  });
+
+  function connectTeammate(teammate) {
+    let disconnectedTeammates = JSON.parse(localStorage.getItem("disconnectedTeammates"))
+    let connectedTeammates = JSON.parse(localStorage.getItem("connectedTeammates"))
+    let connectedUsersElement = document.getElementById('connected-teammates')
+
+    disconnectedTeammates = disconnectedTeammates.filter((user) => user.username == teammate.username)
+    localStorage.setItem("disconnectedTeammates", JSON.stringify(disconnectedTeammates))
+
+    let item = document.getElementById(teammate.username.toLowerCase())
+    if (item) item.remove()
+
+    var newItem = document.createElement('li');
+    newItem.textContent = teammate.username;
+    newItem.setAttribute("id", teammate.username)
+    newItem.classList.add("connected");
+    newItem.addEventListener('click', function(e) {
+      sendPrivateEmoji(e.target.id)
+    });
+
+    var messagesItem = document.createElement('ul')
+    messagesItem.setAttribute("id", "msg"+teammate.username)
+
+
+    connectedUsersElement.appendChild(newItem);
+    connectedUsersElement.appendChild(messagesItem);
+
+  }
+
+
+  socket.on("user:connected", (teammate) => {
+    console.log("teammate connected", teammate)
+    let users = JSON.parse(localStorage.getItem("disconnectedTeammates"))
+    let connectedTeammates = JSON.parse(localStorage.getItem("connectedTeammates"))
+    connectedTeammates.push(teammate)
+    connectTeammate(teammate)
+    console.log("new list of connected teammates", connectedTeammates)
+    localStorage.setItem("connectedTeammates", JSON.stringify(connectedTeammates))
+
+  });
+
+  socket.on("team:connected", (response) => {
+    const teammates = response.teammates
+    console.log("connected team", teammates)
+    teammates.forEach(teammate => {
+      connectTeammate(teammate)
+    });
+    console.log("new list of connected teammates", teammates)
+    localStorage.setItem("connectedTeammates", JSON.stringify(teammates))
+    console.log(localStorage.getItem)
+  });
+
+  socket.on("emoji:private", (msg) => {
+    const { from, emojiId } = msg
+    let item = document.getElementById("msg"+from.toLowerCase())
+    var newItem = document.createElement('p');
+    newItem.textContent = "emoji with id: " + emojiId;
+    item.appendChild(newItem)
+  });
+
+  socket.on("emoji:team", (msg) => {
+    console.log(msg, "emoji sent to team")
+  });
+
+  function sendPrivateEmoji(username) {
+    const connectedTeammates = JSON.parse(localStorage.getItem("connectedTeammates"))
+    console.log("connected team", connectedTeammates)
+    const teammate = connectedTeammates.find((user)=>user.username.toLowerCase() == username.toLowerCase())
+    console.log("send private to ", teammate)
+    socket.emit('emoji:private', {
+      to: teammate.id,
+      value: 1
+    }, (response) => {
+      console.log("Acknowledgement: ", response.status)
+    })
+  }
+
+  function toTeam() {
+    socket.emit('emoji:team', {
+      value: 2
+    }, (response) => {
+      console.log("Acknowledgement: ", response.status)
+    })
+  }
+
+  function connect(token) {
+    const username = document.getElementById('input').value
+    localStorage.setItem("username", username)
+    socket.auth = { token };
+    socket.connect();
+  }
+
+  function getTeammates() {
+    const url = 'http://localhost:3001/teammates';
+    const token = localStorage.getItem("token")
+    const authHeaders = 'Bearer ' + token
+    const requestParams = {
+      headers: { 'Content-Type': 'application/json', 'Authorization': authHeaders },
+      method: 'GET'
+    }
+    return fetch(url, requestParams).then(data => {
+      return data.json()
+    }).then((response) => {
+      console.log(response)
+      const users = response.users
+      let allUsers = document.getElementById('disconnected-teammates')
+      users.forEach(user => {
+        var item = document.createElement('li');
+        item.textContent = user.username;
+        item.setAttribute("id", user.username.toLowerCase())
+        allUsers.appendChild(item);
+      });
+
+      localStorage.setItem("disconnectedTeammates", JSON.stringify(users))
+      localStorage.setItem("connectedTeammates", JSON.stringify([]))
+    })
+  }
+
+  function login() {
+
+    const url = 'http://localhost:3001/login';
+
+    const username = document.getElementById('input').value
+    const password = "fakepass"
+    const data = {
+      username,
+      password
+    }
+    const requestParams = {
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data),
+      method: 'PUT'
+    }
+    fetch(url, requestParams).then(data => {
+      return data.json()
+    }).then(response => {
+      const token = response.token
+      localStorage.setItem("token", token)
+      getTeammates().then(() => {
+        connect(token)
+      })
+    }).catch((err) => {
+      console.log(err)
+    })
+  }
+</script>
+
+</html>
